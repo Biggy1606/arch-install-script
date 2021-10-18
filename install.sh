@@ -53,6 +53,10 @@ mountpartition() {
 installbasepackages() {
 	echo -e "-- Install base system and gen fstab --\n\n"
 	pacstrap /mnt base linux linux-firmware btrfs-progs vim sudo grub grub-btrfs efibootmgr os-prober
+  fstabfile=/mnt/etc/fstab
+  if [[ -f "${fstabfile}"]]; then
+    rm "${fstabfile}"
+  fi
 	genfstab -U /mnt >> /mnt/etc/fstab
 	cat /mnt/etc/fstab
 	pause

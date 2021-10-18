@@ -4,8 +4,8 @@
 # Most code copied from: https://github.com/MatMoul/archfi
 # End
 
-disk=/dev/sda
-diskpartition=${disk}
+disk=/dev/nvme0n1
+diskpartition="${disk}p"
 locale=("en_US.UTF-8" "pl_PL.UTF-8")
 vconsolefile=("KEYMAP=pl" "FONT=Lat2-Terminus16" "FONT_MAP=8859-2")
 newuser=biggy

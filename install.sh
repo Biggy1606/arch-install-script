@@ -58,7 +58,9 @@ installbasepackages() {
     rm "${fstabfile}"
   fi
 	genfstab -U /mnt >> /mnt/etc/fstab
+  echo -e "########################\n"
 	cat /mnt/etc/fstab
+  echo -e "########################\n"
 	pause
 }
 
@@ -101,9 +103,9 @@ inchrootsteps(){
   hostsfile=/etc/hosts
 	touch ${hostsfile}
 	echo -e "\n127.0.0.1    localhost\n::1          localhost\n127.0.1.1    beq.localdomain  beq\n" >> ${hostsfile}
-  echo "########################"
+  echo -e "########################\n"
   cat ${hostsfile}
-  echo "########################"
+  echo -e "########################\n"
 	pause
 
 	echo -e "-- Change root password --\n\n"

@@ -6,7 +6,8 @@
 
 disk=/dev/sda
 diskpartition=${disk}
-locale={en_US.UTF-8}
+locale=("en_US.UTF-8" "pl_PL.UTF-8")
+vconsolefile=("KEYMAP=pl" "FONT=Lat2-Terminus16" "FONT_MAP=8859-2")
 newuser=biggy
 hostname="beq"
 
@@ -65,9 +66,27 @@ inchrootsteps(){
   grub-mkconfig -o /boot/
 	pause
 
-	echo -e "-- Set locale ${locale} --\n\n"
-	echo LANG=${locale} > /etc/locale.conf
-	export LANG=${locale}
+  echo -e "-- Set time --\n\n"
+  ln -sf /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
+  hwclock --systohc
+
+	echo -e "-- Set locale ${locales[@]} --\n\n"
+  # Set supported locales
+  rm /etc/locale.gen
+  for local in "${locale[@]}"
+  do
+    echo "$local" >> /etc/locale.gen
+  done
+  locale-gen
+  # Set main LANG
+  echo "LANG=${locale[0]}" > /etc/locale.conf
+  export "LANG=${locale[0]}"
+  # PL chars in console
+  rm /etc/vconsole.conf
+  for config in "${vconsolefile[@]}"
+  do
+    echo "$config" >> /etc/vconsole.conf
+  done
 	pause
 
 	echo -e "-- Set hostname to ${hostname} --\n\n"
@@ -77,7 +96,7 @@ inchrootsteps(){
 	echo -e "-- Create /etc/hosts --\n\n"
   hostsfile=/etc/hosts
 	touch ${hostsfile}
-	echo -e "\n127.0.0.1    localhost\n::1          localhost\n127.0.1.1    beq\n" >> ${hostsfile}
+	echo -e "\n127.0.0.1    localhost\n::1          localhost\n127.0.1.1    beq.localdomain  beq\n" >> ${hostsfile}
   echo "########################"
   cat ${hostsfile}
   echo "########################"
@@ -87,9 +106,9 @@ inchrootsteps(){
 	passwd
 	pause
 
-	echo -e "-- Create normal user --\n\n"
+	echo -e "-- Create normal user ${newuser} and password --\n\n"
 	useradd --create-home ${newuser}
-  echo "New user '${newuser}' created"
+  echo "> New user created"
 	passwd ${newuser}
 	usermod --append --groups wheel biggy
 	pause
@@ -97,6 +116,7 @@ inchrootsteps(){
 	echo -e "-- Manually enable wheel group --\n\n"
   pause
 	visudo
+
 	pause
 }
 

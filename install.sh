@@ -11,6 +11,8 @@ vconsolefile=("KEYMAP=pl" "FONT=Lat2-Terminus16" "FONT_MAP=8859-2")
 newuser=biggy
 hostname="beq"
 
+# Heper functions
+
 pause(){
     read -p "Press any key to continue ..."
     clear
@@ -24,6 +26,8 @@ archchroot(){
 	rm /mnt/root/$(basename "${0}")
 	echo "exit"
 }
+
+#  Sequence functions
 
 createpartitions(){
 	echo -e "-- Create partitions and format them --\n\n"
@@ -41,92 +45,101 @@ createpartitions(){
 	mkfs.fat -F32 ${diskpartition}1
 	mkswap ${diskpartition}2
 	mkfs.btrfs ${diskpartition}3
-	pause
+	return 0
 }
 
 mountpartition() {
 	echo -e "-- Mount linux partition --\n\n"
 	mount ${diskpartition}3 /mnt
-	pause
+	return 0
 }
 
 installbasepackages() {
 	echo -e "-- Install base system and gen fstab --\n\n"
 	pacstrap /mnt base linux linux-firmware btrfs-progs vim sudo grub grub-btrfs efibootmgr os-prober
-  fstabfile=/mnt/etc/fstab
-  if [[ -f "${fstabfile}" ]]; then
-    rm "${fstabfile}"
-  fi
+	fstabfile=/mnt/etc/fstab
+	if [[ -f "${fstabfile}" ]]; then
+    	rm "${fstabfile}"
+	fi
 	genfstab -U /mnt >> /mnt/etc/fstab
-  echo -e "########################\n"
-	cat /mnt/etc/fstab
-  echo -e "########################\n"
-	pause
+	return 0
 }
 
-inchrootsteps(){
+installgrub() {
 	echo -e "-- Mount EFI and install GRUB --\n\n"
 	mkdir -p /boot/efi
 	mount ${diskpartition}1 /boot/efi
 	grub-install --target=x86_64-efi --bootloader-id=GRUB --efi-directory=/boot/efi
-  grub-mkconfig -o /boot/
-	pause
+  	grub-mkconfig -o /boot/
+	return 0
+}
 
-  echo -e "-- Set time --\n\n"
-  ln -sf /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
-  hwclock --systohc
+setsystemtime() {
+	echo -e "-- Set time --\n\n"
+  	ln -sf /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
+  	hwclock --systohc
+	return 0
+}
 
+setlocales() {
 	echo -e "-- Set locale ${locales[@]} --\n\n"
-  # Set supported locales
-  rm /etc/locale.gen
-  for local in "${locale[@]}"
-  do
+	# Set supported locales
+  	rm /etc/locale.gen
+  	for local in "${locale[@]}"
+  	do
     echo "$local" >> /etc/locale.gen
-  done
-  locale-gen
-  # Set main LANG
-  echo "LANG=${locale[0]}" > /etc/locale.conf
-  export "LANG=${locale[0]}"
-  # PL chars in console
-  rm /etc/vconsole.conf
-  for config in "${vconsolefile[@]}"
-  do
-    echo "$config" >> /etc/vconsole.conf
-  done
-	pause
+  	done
+  	locale-gen
+	# Set main LANG
+  	echo "LANG=${locale[0]}" > /etc/locale.conf
+  	export "LANG=${locale[0]}"
+	# PL chars in console
+  	rm /etc/vconsole.conf
+  	for config in "${vconsolefile[@]}"
+  	do
+    	echo "$config" >> /etc/vconsole.conf
+  	done
+	return 0
+}
 
+sethostname(){
 	echo -e "-- Set hostname to ${hostname} --\n\n"
 	echo ${hostname} > /etc/hostname
-	pause
+	return 0
+}
 
+createhostsfile() {
 	echo -e "-- Create /etc/hosts --\n\n"
-  hostsfile=/etc/hosts
+  	hostsfile=/etc/hosts
 	touch ${hostsfile}
 	echo -e "\n127.0.0.1    localhost\n::1          localhost\n127.0.1.1    beq.localdomain  beq\n" >> ${hostsfile}
-  echo -e "########################\n"
-  cat ${hostsfile}
-  echo -e "########################\n"
-	pause
+	echo -e "########################\n"
+  	cat ${hostsfile}
+  	echo -e "########################\n"
+	return 0
+}
 
+changerootpassword() {
 	echo -e "-- Change root password --\n\n"
 	passwd
-	pause
+	return 0
+}
 
+createnewuser() {
 	echo -e "-- Create normal user ${newuser} and password --\n\n"
 	useradd --create-home ${newuser}
-  echo "> New user created"
+  	echo "> New user created"
 	passwd ${newuser}
 	usermod --append --groups wheel biggy
-	pause
+	return 0
+}
 
+enablewheelgroup() {
 	echo -e "-- Manually enable wheel group --\n\n"
-  pause
 	visudo
-
-	pause
+	return 0
 }
 
 createpartitions
 mountpartition
 installbasepackages
-# inchrootsteps

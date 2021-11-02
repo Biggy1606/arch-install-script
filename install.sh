@@ -2,22 +2,39 @@
 
 # Notes:
 # Most code copied from: https://github.com/MatMoul/archfi
+# $1 - manual execute functions
+# $2 - enter disk path
 # End
 
-disk=/dev/nvme0n1
-diskpartition="${disk}p"
-locale=("en_US.UTF-8" "pl_PL.UTF-8")
-vconsolefile=("KEYMAP=pl" "FONT=Lat2-Terminus16" "FONT_MAP=8859-2")
-newuser=biggy
-hostname="beq"
+## Debug
+debug() {
+	echo "pajac"
+	echo $diskpartition
+}
 
 # Heper functions
 
+loaddisk() {
+	if [ -e "$2" ]
+	then
+		disk=$2
+		diskpartition="${disk}p"
+	else
+		echo "Disk $2 dont exist in your filesystem"
+		exit 1
+	fi
+}
+loadconfig() {
+	loaddisk
+	locale=("en_US.UTF-8" "pl_PL.UTF-8")
+	vconsolefile=("KEYMAP=pl" "FONT=Lat2-Terminus16" "FONT_MAP=8859-2")
+	newuser="biggy"
+	hostname="beq"
+}
 pause(){
     read -p "Press any key to continue ..."
     clear
 }
-
 archchroot(){
 	echo "arch-chroot /mnt /root"
 	cp ${0} /mnt/root
@@ -47,13 +64,11 @@ createpartitions(){
 	mkfs.btrfs ${diskpartition}3
 	return 0
 }
-
 mountpartition() {
 	echo -e "-- Mount linux partition --\n\n"
 	mount ${diskpartition}3 /mnt
 	return 0
 }
-
 installbasepackages() {
 	echo -e "-- Install base system and gen fstab --\n\n"
 	pacstrap /mnt base linux linux-firmware btrfs-progs vim sudo grub grub-btrfs efibootmgr os-prober
@@ -64,7 +79,14 @@ installbasepackages() {
 	genfstab -U /mnt >> /mnt/etc/fstab
 	return 0
 }
+# Use after configuring base system
+installpackages() {
+	echo -e "-- Install plasma and other software --\n\n"
+	pacstrap /mnt xorg plasma konsole firefox
+	return 0
+}
 
+## Rest of the functions use from chroot!!!
 installgrub() {
 	echo -e "-- Mount EFI and install GRUB --\n\n"
 	mkdir -p /boot/efi
@@ -73,14 +95,12 @@ installgrub() {
   	grub-mkconfig -o /boot/
 	return 0
 }
-
 setsystemtime() {
 	echo -e "-- Set time --\n\n"
   	ln -sf /usr/share/zoneinfo/Europe/Warsaw /etc/localtime
   	hwclock --systohc
 	return 0
 }
-
 setlocales() {
 	echo -e "-- Set locale ${locales[@]} --\n\n"
 	# Set supported locales
@@ -101,13 +121,11 @@ setlocales() {
   	done
 	return 0
 }
-
 sethostname(){
 	echo -e "-- Set hostname to ${hostname} --\n\n"
 	echo ${hostname} > /etc/hostname
 	return 0
 }
-
 createhostsfile() {
 	echo -e "-- Create /etc/hosts --\n\n"
   	hostsfile=/etc/hosts
@@ -117,13 +135,11 @@ createhostsfile() {
 	echo '127.0.1.1    beq' >> ${hostsfile}
 	return 0
 }
-
 changerootpassword() {
 	echo -e "-- Change root password --\n\n"
 	passwd
 	return 0
 }
-
 createnewuser() {
 	echo -e "-- Create normal user ${newuser} and password --\n\n"
 	useradd --create-home ${newuser}
@@ -132,15 +148,10 @@ createnewuser() {
 	usermod --append --groups wheel biggy
 	return 0
 }
-
 enablewheelgroup() {
 	echo -e "-- Manually enable wheel group --\n\n"
 	visudo
 	return 0
 }
 
-
-
-createpartitions
-mountpartition
-installbasepackages
+$1

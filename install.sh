@@ -112,10 +112,9 @@ createhostsfile() {
 	echo -e "-- Create /etc/hosts --\n\n"
   	hostsfile=/etc/hosts
 	touch ${hostsfile}
-	echo -e "\n127.0.0.1    localhost\n::1          localhost\n127.0.1.1    beq.localdomain  beq\n" >> ${hostsfile}
-	echo -e "########################\n"
-  	cat ${hostsfile}
-  	echo -e "########################\n"
+	echo '127.0.0.1    localhost' >> ${hostsfile}
+	echo '::1          localhost' >> ${hostsfile}
+	echo '127.0.1.1    beq' >> ${hostsfile}
 	return 0
 }
 
@@ -139,6 +138,8 @@ enablewheelgroup() {
 	visudo
 	return 0
 }
+
+
 
 createpartitions
 mountpartition
